@@ -1,0 +1,39 @@
+{
+    "name": "barcode-scanner",
+    "homepage": "https://github.com/khrome/barcode-scanner",
+    "version": "0.0.1",
+    "main": "barcode-scanner.js",
+    "description": "A utility for Scanning barcodes supporting HID or serial drivers(and eventually wedge)",
+    "keywords": [
+        "barcode",
+        "scanner"
+    ],
+    "author": "Abbey Hawk Sparrow <@khrome> (http://patternweaver.com)",
+    "contributors": [],
+    "bugs": {
+        "url": "https://github.com/khrome/barcode-scanner/issues"
+    },
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/khrome/barcode-scanner.git"
+    },
+    "dependencies": {
+        "yargs": "*",
+        "extended-emitter": "*",
+        "async-arrays": "*",
+        "node-hid": "*",
+        "shazbot": "*",
+        "serialport": "*"
+    },
+    "devDependencies": {
+        "mocha": "*",
+        "should": "*"
+    },
+    "optionalDependencies": {
+        "amazon-product-api": "*"
+    },
+    "engines": {
+        "node": "*"
+    }
+}
