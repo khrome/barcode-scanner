@@ -45,8 +45,6 @@ Tests use mocha/should to execute the tests from root
 
 If you find any rough edges, please submit a bug!
 
-Right now this only supports credit cards, but this could easily expand to gift cards, EBT, checks, etc. If you have a specific interest, contact me.
-
 Enjoy,
 
 -Abbey Hawk Sparrow
