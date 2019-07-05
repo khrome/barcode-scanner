@@ -1,7 +1,7 @@
 {
     "name": "barcode-scanner",
     "homepage": "https://github.com/khrome/barcode-scanner",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "main": "barcode-scanner.js",
     "description": "A utility for Scanning barcodes supporting HID or serial drivers(and eventually wedge)",
     "keywords": [
@@ -19,16 +19,20 @@
         "url": "git://github.com/khrome/barcode-scanner.git"
     },
     "dependencies": {
-        "yargs": "*",
-        "extended-emitter": "*",
+        "ascii-art": "^1.5.1",
         "async-arrays": "*",
+        "extended-emitter": "*",
         "node-hid": "*",
+        "serialport": "*",
         "shazbot": "*",
-        "serialport": "*"
+        "yargs": "*"
     },
     "devDependencies": {
         "mocha": "*",
         "should": "*"
+    },
+    "scripts":{
+        "apt-deps" : "sudo apt-get install libudev-dev;apt-get install libusb-1.0-0-dev"
     },
     "optionalDependencies": {},
     "engines": {
