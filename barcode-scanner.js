@@ -10,21 +10,24 @@ switch(process.platform){
         if(!drivers.HID) drivers.HID = require('node-hid');
         if(!listers.HID) listers.HID = function(cb){
             var devices = drivers.HID.devices().filter(function(device){
-                    var isApple = device.manufacturer.indexOf('Apple ') !== -1;
+                    var isApple = device.product &&
+                        (device.product.indexOf('Apple ') !== -1);
                     var isMikeyDriver = device.product === 'Apple Mikey HID Driver';
-                return !(isMikeyDriver || isApple);
+                return !(isMikeyDriver || isApple || device.product === 'Keyboard Backlight');
             });
             if(cb) cb(devices);
         };
         if(!drivers.serial) drivers.serial = {SerialPort:require('serialport')};
         if(!listers.serial) listers.serial = function(cb){
-            drivers.serial.list(function (err, ports) {
+            drivers.serial.SerialPort.list().then(function(ports){
                 //*
                 ports = ports.filter(function(device){
-                    var result = device.comName !== '/dev/cu.Bluetooth-Incoming-Port';
+                    var result = device.path === '/dev/cu.Bluetooth-Incoming-Port';
                     return result;
                 }); // */
                 cb(ports);
+            }).catch(function(err){
+
             });
         }
         var SerialPort = drivers.serial.SerialPort;
@@ -37,13 +40,15 @@ switch(process.platform){
         };
         if(!drivers.serial) drivers.serial = {SerialPort:require('serialport')};
         if(!listers.serial) listers.serial = function(cb){
-            drivers.serial.SerialPort.list(function (err, ports) {
-                //*
+            drivers.serial.SerialPort.list().then(function(ports){
+                /*
                 ports = ports.filter(function(device){
-                    var result = device.comName !== '/dev/cu.Bluetooth-Incoming-Port';
+                    var result = device.path !== '/dev/cu.Bluetooth-Incoming-Port';
                     return result;
                 }); // */
                 cb(ports);
+            }).catch(function(err){
+
             });
         }
         var SerialPort = drivers.serial.SerialPort;
@@ -52,17 +57,24 @@ switch(process.platform){
 }
 
 module.exports.listen = function(device, handler){
-    if(!!device.comName){
-        var serialDevice = new drivers.serial.SerialPort(device.comName);
+    if(!!device.serial){
+        var serialDevice = new drivers.serial.SerialPort(device.serial);
         serialDevice.on('data', function(data){
             handler(data.toString().trim());
         });
         return;
     }else{
-        var HIDDevice = new drivers.HID.HID(device.path);
-        HIDDevice.on('data', function(data){
-            handler(data.toString());
-        });
+        if(device.vendor && device.product){
+            var HIDDevice = new drivers.HID.HID(device.vendor, device.product);
+            HIDDevice.on('data', function(data){
+                handler(data.toString());
+            });
+        }else{
+            var HIDDevice = new drivers.HID.HID(device.hid);
+            HIDDevice.on('data', function(data){
+                handler(data.toString());
+            });
+        }
     }
 }
 

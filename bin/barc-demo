@@ -1,0 +1,140 @@
+#!/usr/bin/env node
+var argv;
+var yargs = require('yargs');
+var fs = require('fs');
+var art = require('ascii-art');
+var amazon;
+var BarcodeScanner = require('../barcode-scanner');
+var AmazonProductAPI = require('shazbot');
+yargs.usage('Usage: $0 <command> [options]')
+yargs.command('server', 'launch a barcode-scanner server')
+    .demand(1)
+    .example('$0 server -p 8080 ', 'Run a server on port 8080')
+    .alias('p', 'port')
+        .nargs('p', 1)
+        .describe('p', 'TCP/IP Port to run the server on')
+    .alias('e', 'environment')
+        .alias('e', 'env')
+        .nargs('e', 1)
+        .choices('e', ['development', 'staging', 'production', 'demo'])
+        .describe('e', 'The environment you are running in');
+yargs.command('demo', 'launch a barcode-scanner demo')
+    .demand(1)
+    .example('$0 server -p 8080 ', 'Run a server on port 8080')
+    .alias('d', 'aws-id')
+        .nargs('d', 1)
+        .describe('d', 'Your Amazon AWS ID')
+    .alias('s', 'aws-secret')
+        .nargs('s', 1)
+        .describe('s', 'Your Amazon AWS Secret')
+    .alias('t', 'aws-tag')
+        .nargs('t', 1)
+        .describe('t', 'Your Amazon AWS Tag')
+    .alias('r', 'serial-barcode')
+        .nargs('r', 1)
+        .describe('r', 'Use a serial barcode scanner')
+    .alias('i', 'hid-barcode')
+        .nargs('i', 1)
+        .describe('i', 'Use a USB HID barcode scanner');
+yargs.command('probe', 'probe the hardware on this system')
+    .demand(1)
+    .example('$0 probe --serial-barcode /dev/cu.usbmodemFD121 ', 'Listen for data on a serial barcode reader')
+    .alias('r', 'serial-barcode')
+        .nargs('r', 1)
+        .describe('r', 'Probe a serial barcode scanner')
+    .alias('i', 'hid-barcode')
+        .nargs('i', 1)
+        .describe('i', 'Probe a USB HID barcode scanner');
+yargs.command('probe-all', 'use probe to list all hardware on this system')
+    .demand(1)
+    .example('$0 probe-all ', '');
+yargs.help('h')
+    .alias('h', 'help')
+    .epilog('©2016 - Abbey Hawk Sparrow');
+argv = yargs.argv;
+var action = argv._.pop();
+
+function listen(cb){
+    if(argv.r){
+        BarcodeScanner.listen({
+            comName : argv.r
+        }, cb);
+    }
+    if(argv.i){
+        BarcodeScanner.listen({
+            path : argv.i
+        }, cb);
+    }
+}
+
+function amazonAPI(cb){
+    if(argv.d || argv.s || argv.t){
+        if(!(argv.d && argv.s && argv.t)) throw new Error('must include AWS ID, Secret & Tag to use the Amazon API');
+    }
+    var client = new AmazonProductAPI({
+      'AWSAccessKeyId': argv.d,
+      'AWSSecret': argv.s,
+      'associate-tag': argv.t
+    });
+    cb({
+        search : function(options, cb){
+            var verb = 'search';
+            if(options.upc){
+                options = {
+                    'item-id' : options.upc,
+                    'search-index': 'All',
+                    'id-type':'UPC'
+                };
+                verb = 'lookup';
+            }
+            if(options.ean){
+                options = {
+                    'item-id' : options.ean,
+                    'search-index': 'All',
+                    'id-type':'EAN'
+                };
+                verb = 'lookup';
+            }
+            client[verb](options, function(err, results){
+              return cb(err, results);
+            });
+        }
+    });
+
+}
+
+var creator = {
+    Book : function(item){
+        return item.author;
+    },
+    DVD : function(item){
+        return item.director
+    },
+};
+
+switch(action){
+    case 'demo':
+        amazonAPI(function(api){
+            listen(function(barcode){
+                try{
+                var code = parseInt(barcode)+'';
+                if(code.length == 12) code = '0'+code;
+                console.log('Ready to Scan'+"\n");
+                api.search({
+                    ean : code,
+                }, function(err, results){
+                    var text = results['product-group']+'             '.substring(results['product-group'].length);
+                    console.log(art.style(text, 'white') + art.style(results.title, 'bright_white'));
+                    if(creator[results['product-group']]) console.log(art.style('Creator      ', 'white') + art.style(
+                        creator[results['product-group']](results), 'bright_white'
+                    ));
+                    console.log(art.style('Manufacturer ', 'white') + art.style(results.manufacturer, 'bright_white'));
+                    console.log(art.style(results.url, 'blue') + "\n");
+                });
+                }catch(ex){
+                    console.log('EXX', ex);
+                }
+            });
+        });
+        break;
+}
