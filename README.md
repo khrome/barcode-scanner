@@ -32,6 +32,8 @@ Additionally you can refer to your HID scanner with product and vendor ids:
         // do stuff
     });
 
+As a note, some OSs require signing to access your drivers (like OS X + Electron), you'll need to have that done in order to connect to them.
+
 CommandLine
 -----------
 You can use the `barc` command to query individual scanners connected to your machine and to monitor them for input both to understand the state of your machine or to troubleshoot connectivity issues (Probe does not work on OS X, unless you are running in a context that already has rights to, but `probe-all` continues to work).

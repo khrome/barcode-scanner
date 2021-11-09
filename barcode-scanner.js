@@ -9,6 +9,7 @@ switch(process.platform){
     case 'darwin':
         if(!drivers.HID) drivers.HID = require('node-hid');
         if(!listers.HID) listers.HID = function(cb){
+            //console.log('***', drivers.HID.devices())
             var devices = drivers.HID.devices().filter(function(device){
                     var isApple = device.product &&
                         (device.product.indexOf('Apple ') !== -1);
@@ -70,7 +71,7 @@ module.exports.listen = function(device, handler){
                 handler(data.toString());
             });
         }else{
-            var HIDDevice = new drivers.HID.HID(device.hid);
+            var HIDDevice = new drivers.HID.HID(device.hid || device.path);
             HIDDevice.on('data', function(data){
                 handler(data.toString());
             });
